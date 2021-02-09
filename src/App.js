@@ -1,4 +1,3 @@
-import { createContext } from 'react';
 import Login from './components/Login';
 import AdminInterface from './components/AdminInterface';
 import { ThemeProvider } from '@material-ui/core/styles';
@@ -32,16 +31,13 @@ export default function App() {
 
   return (
     <>
-      <AdminUrlContext.Provider value={'http://localhost:1337'}>
+      <AdminUrlContext.Provider value='http://localhost:1337'>
         <CssBaseline />
         <ThemeProvider theme={theme}>
           {credentials.loggedIn ? (
             <AdminInterface logout={logout} />
           ) : (
-            <Login
-              setCredentials={setCredentials}
-              loggedIn={credentials.loggedIn}
-            />
+            <Login />
           )}
         </ThemeProvider>
       </AdminUrlContext.Provider>

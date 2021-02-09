@@ -57,6 +57,7 @@ export default function NavTemplate({
   setLocation,
   children,
   logout,
+  loggedIn,
 }) {
   const classes = useStyles();
 
@@ -73,7 +74,7 @@ export default function NavTemplate({
         </Toolbar>
       </AppBar>
       <div className={classes.content}>
-        <Background>{children}</Background>
+        <Background loggedIn={true}>{children}</Background>
       </div>
       <BottomNavigation
         value={location}

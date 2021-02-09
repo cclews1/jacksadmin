@@ -5,6 +5,9 @@ import NavTemplate from '../NavTemplate';
 import PageWrap from '../AdminInterface/PageWrap';
 import axios from 'axios';
 import { AdminUrlContext } from '../../AdminUrlContext';
+import { AdminContext } from './AdminContext';
+import Edit from '../AdminInterface/AdminPages/Edit';
+import Add from './AdminPages/Add';
 
 const useStyles = makeStyles((theme) => ({
   container: {
@@ -16,12 +19,20 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function AdminInterface({ logout }) {
+export default function AdminInterface({ logout, loggedIn }) {
   const classes = useStyles();
   const [location, setLocation] = useState('inventory');
   const [inventory, setInventory] = useState();
+  const [editVehicle, setEditVehicle] = useState();
+
+  const store = {
+    inventory: [inventory, setInventory],
+    location: [location, setLocation],
+    editVehicle: [editVehicle, setEditVehicle],
+  };
+
   const adminUrl = useContext(AdminUrlContext);
-  console.log(adminUrl);
+
   useEffect(() => {
     async function fetchInventory() {
       const inventory = await axios
@@ -41,28 +52,21 @@ export default function AdminInterface({ logout }) {
   }, [adminUrl]);
 
   return (
-    <div className={classes.container}>
-      <NavTemplate
-        location={location}
-        setLocation={setLocation}
-        logout={logout}
-      >
-        <PageWrap>
-          {location === 'inventory' && (
-            <Inventory inventory={inventory} adminUrl={adminUrl} />
-          )}
-          {location === 'addVehicle' && <AddVehicle />}
-          {location === 'editVehicle' && <EditVehicle />}
-        </PageWrap>
-      </NavTemplate>
-    </div>
+    <AdminContext.Provider value={store}>
+      <div className={classes.container}>
+        <NavTemplate
+          location={location}
+          setLocation={setLocation}
+          logout={logout}
+          loggedIn={loggedIn}
+        >
+          <PageWrap>
+            {location === 'inventory' && <Inventory />}
+            {location === 'addVehicle' && <Add />}
+            {location === 'editVehicle' && <Edit />}
+          </PageWrap>
+        </NavTemplate>
+      </div>
+    </AdminContext.Provider>
   );
-}
-
-function AddVehicle() {
-  return <h1>Add Vehicle</h1>;
-}
-
-function EditVehicle() {
-  return <h1>Edit Vehicle</h1>;
 }

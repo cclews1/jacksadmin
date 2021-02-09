@@ -11,10 +11,6 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-  },
-  childWrapper: {
-    height: '100%',
-    width: '100%',
     padding: '1rem',
   },
 }));
@@ -24,9 +20,7 @@ export default function Background({ children, loggedIn }) {
   return (
     <>
       {loggedIn && <Toolbar />}
-      <div className={classes.backgroundStyle}>
-        <div className={classes.childWrapper}>{children}</div>
-      </div>
+      <div className={classes.backgroundStyle}>{children}</div>
       {loggedIn && <BottomNavigation />}
     </>
   );

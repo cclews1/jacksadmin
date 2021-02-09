@@ -47,8 +47,9 @@ const useStyles = makeStyles((style) => ({
   },
 }));
 
-export default function Login({ setCredentials, loggedIn }) {
-  const adminUrl = useContext(AdminUrlContext);
+export default function Login() {
+  const adminUrl = useContext(AdminUrlContext).adminUrl;
+  const setCredentials = useContext(AdminUrlContext).setCredentials;
   const classes = useStyles();
   const [values, setValues] = useState({
     email: '',
@@ -86,7 +87,7 @@ export default function Login({ setCredentials, loggedIn }) {
   }
 
   return (
-    <Background loggedIn={loggedIn}>
+    <Background loggedIn={false}>
       <div className={classes.container}>
         <form onSubmit={handleSubmit}>
           <Paper className={classes.login}>
