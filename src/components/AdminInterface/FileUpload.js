@@ -1,9 +1,9 @@
 import { useState, useRef } from 'react';
-import { PhotoCamera } from '@material-ui/icons';
+import { PhotoCamera, Close } from '@material-ui/icons';
 import {
   Button,
   Card,
-  CardActions,
+  IconButton,
   CardMedia,
   makeStyles,
   Typography,
@@ -12,9 +12,6 @@ import {
 const useStyles = makeStyles((theme) => ({
   header: {
     fontFamily: theme.typography.jackFont,
-  },
-  imageUploadHeader: {
-    // marginBottom: '-0.5rem',
   },
   fileUploadContainer: {
     display: 'flex',
@@ -34,18 +31,23 @@ const useStyles = makeStyles((theme) => ({
   },
   uploadedFilesContainer: {
     display: 'flex',
-    flexDirection: 'column',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
+    justifyContent: 'center',
     width: '100%',
+    padding: '1rem 0',
   },
   cardMedia: {
-    height: 100,
+    height: 180,
     width: '100%',
   },
   card: {
-    width: '100%',
-    maxWidth: 200,
-    margin: '1rem 0',
+    width: 270,
+  },
+  cardContainer: {
+    position: 'relative',
+    margin: '0.75rem',
   },
   input: {
     backgroundColor: 'lightgrey',
@@ -64,6 +66,12 @@ const useStyles = makeStyles((theme) => ({
     '&:focus': {
       outline: 'none',
     },
+  },
+  imageDelete: {
+    backgroundColor: 'lightgrey',
+    position: 'absolute',
+    top: '-15px',
+    right: '-15px',
   },
 }));
 
@@ -105,7 +113,7 @@ function FileUpload({
   }
 
   function convertNestedObjectToArray(nestedObj) {
-    Object.keys(nestedObj).map((key) => nestedObj[key]);
+    return Object.keys(nestedObj).map((key) => nestedObj[key]);
   }
 
   function callUpdateFilesCb(files) {
@@ -144,28 +152,28 @@ function FileUpload({
       </section>
 
       <Typography className={classes.imageUploadHeader}>
-        Images To Upload:
+        Images To Upload: {images && images[0] ? images.length : 0}
       </Typography>
       <section className={classes.uploadedFilesContainer}>
         {Object.keys(files).map((fileName, i) => {
           let file = files[fileName];
           return (
-            <Card className={classes.card}>
-              <CardMedia
-                className={classes.cardMedia}
-                image={URL.createObjectURL(file)}
-                alt={`file preview ${i}`}
-              />
-              <CardActions>
-                <Button
-                  size='small'
-                  color='secondary'
-                  onClick={() => removeFile(fileName)}
-                >
-                  Remove Image
-                </Button>
-              </CardActions>
-            </Card>
+            <div key={i} className={classes.cardContainer}>
+              <Card className={classes.card}>
+                <CardMedia
+                  className={classes.cardMedia}
+                  image={URL.createObjectURL(file)}
+                  alt={`file preview ${i}`}
+                />
+              </Card>
+              <IconButton
+                size='small'
+                className={classes.imageDelete}
+                onClick={() => removeFile(fileName)}
+              >
+                <Close />
+              </IconButton>
+            </div>
           );
         })}
       </section>
