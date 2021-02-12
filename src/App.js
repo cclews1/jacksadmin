@@ -1,38 +1,45 @@
-import Login from './components/Login';
-import AdminInterface from './components/AdminInterface';
+import Login from './components/AuthSections/Login';
+import AdminInterface from './components/AuthSections/AdminInterface';
 import { ThemeProvider } from '@material-ui/core/styles';
 import { CssBaseline } from '@material-ui/core';
 import theme from './theme';
 import { useState, useEffect } from 'react';
-import { AdminUrlContext } from './AdminUrlContext';
+import { AuthContext } from './AuthContext';
+import firebase from './firebase';
 
 export default function App() {
   const [credentials, setCredentials] = useState({
-    email: '',
-    loggedIn: false,
+    email: null,
   });
-  useEffect(() => {
-    const loggedIn = localStorage.getItem('loggedIn');
-    if (loggedIn) {
-      setCredentials({
-        email: localStorage.getItem('email'),
-        loggedIn: true,
-      });
-    }
-  }, []);
+
+  // firebase.auth().onAuthStateChanged((user) => {
+  //   if (user) {
+  //     setCredentials({
+  //       email: user.email,
+  //     });
+  //   }
+  // });
 
   function logout() {
-    setCredentials({
-      email: '',
-      loggedIn: false,
-    });
-    localStorage.clear();
+    firebase
+      .auth()
+      .signOut()
+      .then(() => {
+        setCredentials({ email: null });
+      })
+      .catch((err) => {
+        console.log('A logout error occurred.');
+      });
   }
 
   return (
     <>
-      <AdminUrlContext.Provider value='http://localhost:1337'>
-        <CssBaseline />
+      <CssBaseline />
+      <AuthContext.Provider
+        value={{
+          useCredentials: [credentials, setCredentials],
+        }}
+      >
         <ThemeProvider theme={theme}>
           {credentials.loggedIn ? (
             <AdminInterface logout={logout} />
@@ -40,7 +47,7 @@ export default function App() {
             <Login />
           )}
         </ThemeProvider>
-      </AdminUrlContext.Provider>
+      </AuthContext.Provider>
     </>
   );
 }

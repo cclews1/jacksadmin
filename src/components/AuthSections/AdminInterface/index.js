@@ -1,12 +1,12 @@
 import { useState, useEffect, useContext } from 'react';
 import { makeStyles } from '@material-ui/core';
-import Inventory from './AdminPages/Inventory';
-import NavTemplate from '../NavTemplate';
-import PageWrap from '../AdminInterface/PageWrap';
+// import Inventory from './AdminPages/Inventory';
+import NavTemplate from '../../NavTemplate';
+import PageWrap from './PageWrap';
 import axios from 'axios';
-import { AdminUrlContext } from '../../AdminUrlContext';
+// import { AdminUrlContext } from '../../../AuthContext';
 import { AdminContext } from './AdminContext';
-import Edit from '../AdminInterface/AdminPages/Edit';
+// import Edit from './AdminPages/Edit';
 import Add from './AdminPages/Add';
 
 const useStyles = makeStyles((theme) => ({
@@ -31,25 +31,25 @@ export default function AdminInterface({ logout, loggedIn }) {
     editVehicle: [editVehicle, setEditVehicle],
   };
 
-  const adminUrl = useContext(AdminUrlContext);
+  // const adminUrl = useContext(AdminUrlContext);
 
-  useEffect(() => {
-    async function fetchInventory() {
-      const inventory = await axios
-        .get(`${adminUrl}/cars`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.jwt}`,
-          },
-        })
-        .then((res) => {
-          setInventory(res.data);
-        })
-        .catch((err) => {
-          console.log(err.message);
-        });
-    }
-    fetchInventory();
-  }, [adminUrl]);
+  // useEffect(() => {
+  //   async function fetchInventory() {
+  //     const inventory = await axios
+  //       .get(`${adminUrl}/cars`, {
+  //         headers: {
+  //           Authorization: `Bearer ${localStorage.jwt}`,
+  //         },
+  //       })
+  //       .then((res) => {
+  //         setInventory(res.data);
+  //       })
+  //       .catch((err) => {
+  //         console.log(err.message);
+  //       });
+  //   }
+  //   fetchInventory();
+  // }, [adminUrl]);
 
   return (
     <AdminContext.Provider value={store}>
@@ -61,12 +61,20 @@ export default function AdminInterface({ logout, loggedIn }) {
           loggedIn={loggedIn}
         >
           <PageWrap>
-            {location === 'inventory' && <Inventory />}
+            {location === 'inventory' && <InventoryPlaceHolder />}
             {location === 'addVehicle' && <Add />}
-            {location === 'editVehicle' && <Edit />}
+            {location === 'editVehicle' && <EditPlaceHolder />}
           </PageWrap>
         </NavTemplate>
       </div>
     </AdminContext.Provider>
   );
+}
+
+function EditPlaceHolder() {
+  return <h1>edit</h1>;
+}
+
+function InventoryPlaceHolder() {
+  return <h1>inventory</h1>;
 }

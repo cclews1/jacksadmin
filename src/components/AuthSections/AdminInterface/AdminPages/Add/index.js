@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { makeStyles, Button, TextField, Typography } from '@material-ui/core';
 import { Publish } from '@material-ui/icons';
-import firebase from '../../../../firebase';
+import firebase from '../../../../../firebase';
 import uuid from 'uuid/dist/v4';
 import FileUpload from '../../FileUpload';
 

@@ -1,5 +1,5 @@
-import Background from '../Background';
-import { AdminUrlContext } from '../../AdminUrlContext';
+import Background from '../../Background';
+import { AuthContext } from '../../../AuthContext';
 import {
   makeStyles,
   Paper,
@@ -11,8 +11,7 @@ import {
 import { Alert } from '@material-ui/lab';
 import { useState, useContext } from 'react';
 import { Email, VpnKey } from '@material-ui/icons';
-import axios from 'axios';
-import { grey } from '@material-ui/core/colors';
+import firebase from '../../../firebase';
 
 const useStyles = makeStyles((style) => ({
   container: {
@@ -48,42 +47,53 @@ const useStyles = makeStyles((style) => ({
 }));
 
 export default function Login() {
-  const adminUrl = useContext(AdminUrlContext).adminUrl;
-  const setCredentials = useContext(AdminUrlContext).setCredentials;
   const classes = useStyles();
   const [values, setValues] = useState({
     email: '',
     password: '',
     errorMessage: '',
   });
+  const { useCredentials } = useContext(AuthContext);
 
-  async function handleSubmit(e) {
+  const [credentials, setCredentials] = useCredentials;
+
+  function handleSubmit(e) {
     e.preventDefault();
     const { email, password } = values;
-    const response = await axios
-      .post(`${adminUrl}/auth/local`, {
-        identifier: email,
-        password: password,
+    firebase
+      .auth()
+      .signInWithEmailAndPassword(email, password)
+      .then((userCredentials) => {
+        console.log(userCredentials);
+        setCredentials({ email: userCredentials.user.email });
       })
       .catch((err) => {
-        try {
-          let message = err.response.data.message[0].messages[0].message;
-          console.log(message);
-          setValues({ ...values, errorMessage: message });
-        } catch {
-          setValues({ ...values, errorMessage: 'something went wrong' });
-        }
-        return;
+        console.log(err.message);
       });
-    if (!response) return;
-    console.log(response);
-    localStorage.setItem('jwt', response.data.jwt);
-    localStorage.setItem('email', email);
-    localStorage.setItem('loggedIn', true);
-    setCredentials({
-      email: email,
-      loggedIn: true,
-    });
+    // const response = await axios
+    //   .post(`${adminUrl}/auth/local`, {
+    //     identifier: email,
+    //     password: password,
+    //   })
+    //   .catch((err) => {
+    //     try {
+    //       let message = err.response.data.message[0].messages[0].message;
+    //       console.log(message);
+    //       setValues({ ...values, errorMessage: message });
+    //     } catch {
+    //       setValues({ ...values, errorMessage: 'something went wrong' });
+    //     }
+    //     return;
+    //   });
+    // if (!response) return;
+    // console.log(response);
+    // localStorage.setItem('jwt', response.data.jwt);
+    // localStorage.setItem('email', email);
+    // localStorage.setItem('loggedIn', true);
+    // setCredentials({
+    //   email: email,
+    //   loggedIn: true,
+    // });
   }
 
   return (
