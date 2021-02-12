@@ -12,13 +12,13 @@ export default function App() {
     email: null,
   });
 
-  // firebase.auth().onAuthStateChanged((user) => {
-  //   if (user) {
-  //     setCredentials({
-  //       email: user.email,
-  //     });
-  //   }
-  // });
+  useEffect(() => {
+    firebase
+      .auth()
+      .onAuthStateChanged((userCredentials) =>
+        setCredentials({ email: userCredentials.email })
+      );
+  }, []);
 
   function logout() {
     firebase
@@ -41,7 +41,7 @@ export default function App() {
         }}
       >
         <ThemeProvider theme={theme}>
-          {credentials.loggedIn ? (
+          {credentials.email !== null ? (
             <AdminInterface logout={logout} />
           ) : (
             <Login />
