@@ -24,7 +24,6 @@ import {
   ExpandMore,
 } from '@material-ui/icons';
 import Background from '../Background';
-// import firebase from '../../firebase';
 
 const useStyles = makeStyles((theme) => ({
   container: {
@@ -65,12 +64,16 @@ const useStyles = makeStyles((theme) => ({
     width: '100%',
     maxWidth: theme.breakpoints.values.md,
   },
+  contentAndBottomNavWrapper: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
   bottomNav: {
-    position: 'fixed',
-    bottom: 0,
     width: '100%',
   },
   content: {
+    flex: 1,
     width: '100%',
   },
 }));
@@ -151,35 +154,37 @@ export default function NavTemplate({
           </div>
         </Toolbar>
       </AppBar>
-      <div className={classes.content}>
-        <Background loggedIn={true}>{children}</Background>
+      <div className={classes.contentAndBottomNavWrapper}>
+        <div className={classes.content}>
+          <Background loggedIn={true}>{children}</Background>
+        </div>
+        <Hidden smUp>
+          <BottomNavigation
+            value={location}
+            onChange={(event, newLocation) => {
+              setLocation(newLocation);
+            }}
+            showLabels
+            className={classes.bottomNav}
+          >
+            <BottomNavigationAction
+              label='Inventory'
+              value='inventory'
+              icon={<List />}
+            />
+            <BottomNavigationAction
+              label='Add Vehicle'
+              value='addVehicle'
+              icon={<AddCircleOutline />}
+            />
+            <BottomNavigationAction
+              label='Edit Vehicle'
+              value='editVehicle'
+              icon={<Edit />}
+            />
+          </BottomNavigation>
+        </Hidden>
       </div>
-      <Hidden smUp>
-        <BottomNavigation
-          value={location}
-          onChange={(event, newLocation) => {
-            setLocation(newLocation);
-          }}
-          showLabels
-          className={classes.bottomNav}
-        >
-          <BottomNavigationAction
-            label='Inventory'
-            value='inventory'
-            icon={<List />}
-          />
-          <BottomNavigationAction
-            label='Add Vehicle'
-            value='addVehicle'
-            icon={<AddCircleOutline />}
-          />
-          <BottomNavigationAction
-            label='Edit Vehicle'
-            value='editVehicle'
-            icon={<Edit />}
-          />
-        </BottomNavigation>
-      </Hidden>
     </>
   );
   function NavButton({ value, isLogout }) {
