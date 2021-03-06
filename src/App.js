@@ -8,20 +8,20 @@ import { AuthContext } from './AuthContext';
 import firebase from './firebase';
 
 export default function App() {
-  const [credentials, setCredentials] = useState({
-    email: null,
-  });
+  const [credentials, setCredentials] = useState({});
 
   useEffect(() => {
     firebase
       .auth()
       .onAuthStateChanged((userCredentials) =>
-        setCredentials({ email: userCredentials.email })
+        setCredentials(
+          userCredentials ? { email: userCredentials.email } : false
+        )
       );
   }, []);
 
-  function logout() {
-    firebase
+  async function logout() {
+    await firebase
       .auth()
       .signOut()
       .then(() => {
@@ -29,6 +29,9 @@ export default function App() {
       })
       .catch((err) => {
         console.log('A logout error occurred.');
+      })
+      .finally(async () => {
+        localStorage.clear();
       });
   }
 
@@ -41,11 +44,7 @@ export default function App() {
         }}
       >
         <ThemeProvider theme={theme}>
-          {credentials.email !== null ? (
-            <AdminInterface logout={logout} />
-          ) : (
-            <Login />
-          )}
+          {credentials.email ? <AdminInterface logout={logout} /> : <Login />}
         </ThemeProvider>
       </AuthContext.Provider>
     </>

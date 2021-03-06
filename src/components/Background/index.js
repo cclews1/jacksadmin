@@ -1,5 +1,10 @@
 import React from 'react';
-import { BottomNavigation, makeStyles, Toolbar } from '@material-ui/core';
+import {
+  BottomNavigation,
+  makeStyles,
+  Toolbar,
+  Hidden,
+} from '@material-ui/core';
 
 const useStyles = makeStyles((theme) => ({
   backgroundStyle: {
@@ -21,7 +26,11 @@ export default function Background({ children, loggedIn }) {
     <>
       {loggedIn && <Toolbar />}
       <div className={classes.backgroundStyle}>{children}</div>
-      {loggedIn && <BottomNavigation />}
+      {loggedIn && (
+        <Hidden smUp>
+          <BottomNavigation />
+        </Hidden>
+      )}
     </>
   );
 }

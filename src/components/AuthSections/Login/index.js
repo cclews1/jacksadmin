@@ -70,30 +70,6 @@ export default function Login() {
       .catch((err) => {
         console.log(err.message);
       });
-    // const response = await axios
-    //   .post(`${adminUrl}/auth/local`, {
-    //     identifier: email,
-    //     password: password,
-    //   })
-    //   .catch((err) => {
-    //     try {
-    //       let message = err.response.data.message[0].messages[0].message;
-    //       console.log(message);
-    //       setValues({ ...values, errorMessage: message });
-    //     } catch {
-    //       setValues({ ...values, errorMessage: 'something went wrong' });
-    //     }
-    //     return;
-    //   });
-    // if (!response) return;
-    // console.log(response);
-    // localStorage.setItem('jwt', response.data.jwt);
-    // localStorage.setItem('email', email);
-    // localStorage.setItem('loggedIn', true);
-    // setCredentials({
-    //   email: email,
-    //   loggedIn: true,
-    // });
   }
 
   return (

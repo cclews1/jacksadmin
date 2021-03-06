@@ -1,12 +1,9 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { makeStyles, Button, TextField, Typography } from '@material-ui/core';
 import { Publish } from '@material-ui/icons';
-import firebase from '../../../../../firebase';
-import uuid from 'uuid/dist/v4';
 import FileUpload from '../../FileUpload';
-
-const carDB = firebase.database().ref('cars/');
-const storage = firebase.storage().ref();
+import { AdminContext } from '../../AdminContext';
+import { handleSubmit, pullInventory } from '../../../../firebaseUtilities';
 
 const useStyles = makeStyles((theme) => ({
   form: {
@@ -21,6 +18,9 @@ const useStyles = makeStyles((theme) => ({
   },
   textField: {
     margin: '0.5rem',
+  },
+  descriptionField: {
+    width: '14rem',
   },
   textFieldWrapper: {
     display: 'flex',
@@ -39,90 +39,41 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function Add() {
+function Add() {
+  const context = useContext(AdminContext);
+  const [message, setMessage] = context.message;
   const classes = useStyles();
+  const [location, setLocation] = context.location;
   const [uploadForm, setUploadForm] = useState({});
-  const [images, setImages] = useState([]);
-
-  // function updateUploadedFiles(files) {
-  //   setImages(files);
-  // }
+  const [images, setImages] = useState();
 
   function handleChange(e, value) {
     setUploadForm({ ...uploadForm, [value]: e.target.value });
   }
-  function uploadFile(newKey, image) {
-    const imgId = uuid();
-    try {
-      const fileRef = storage.child(imgId);
-      fileRef.put(image);
-      carDB.child(newKey + '/images').push(imgId);
-    } catch (err) {
-      console.log(err.message);
-    }
-  }
-  function handleSubmit(e) {
-    const newKey = carDB.push().key;
-    carDB.child(newKey).set(uploadForm, (err) => {
-      if (err) {
-        console.log(err.message);
-      } else {
-        images.forEach((image) => uploadFile(newKey, image));
-      }
-    });
-  }
 
-  // function handleImage(index, e) {
-  //   const newImages = [...images];
-  //   newImages[index] = e.target.files[0];
-  //   setImages(newImages);
-  // }
+  async function submit(e) {
+    if (!uploadForm.make && !uploadForm.model) {
+      return setMessage({
+        message: 'Please enter make and model of vehicle.',
+        severity: 'warning',
+        open: true,
+      });
+    }
+    const newMessage = await handleSubmit(e, uploadForm, images, context);
+    await pullInventory(context);
+    await setLocation('inventory');
+    setMessage({ ...newMessage, open: true });
+  }
   return (
     <div className={classes.form}>
       <Typography variant='h5' className={classes.heading}>
         Add Vehicle
       </Typography>
-      <div className={classes.textFieldWrapper}>
-        <TextField
-          className={classes.textField}
-          label='Make'
-          value={uploadForm.make}
-          type='text'
-          onChange={(e) => handleChange(e, 'make')}
-        />
-        <TextField
-          className={classes.textField}
-          label='Model'
-          value={uploadForm.model}
-          type='text'
-          onChange={(e) => handleChange(e, 'model')}
-        />
-        <TextField
-          className={classes.textField}
-          label='Year'
-          value={uploadForm.year}
-          type='number'
-          onChange={(e) => handleChange(e, 'year')}
-        />
-        <TextField
-          className={classes.textField}
-          label='Price'
-          value={uploadForm.price}
-          type='number'
-          onChange={(e) => handleChange(e, 'price')}
-        />
-        <TextField
-          className={classes.textField}
-          label='Miles'
-          value={uploadForm.miles}
-          type='number'
-          onChange={(e) => handleChange(e, 'miles')}
-        />
-      </div>
+      <TextFields uploadForm={uploadForm} handleChange={handleChange} />
       <div className={classes.uploadWrapper}>
         <FileUpload
-          images={images}
           label='Upload Images'
+          imagesLabel='Images to Upload'
           multiple
           accept='.jpg,.png,.jpeg'
           updateFilesCb={setImages}
@@ -133,10 +84,69 @@ export default function Add() {
         variant='contained'
         color='primary'
         startIcon={<Publish />}
-        onClick={handleSubmit}
+        onClick={submit}
       >
         Submit Vehicle
       </Button>
     </div>
   );
 }
+
+function TextFields({ uploadForm, handleChange }) {
+  const classes = useStyles();
+  return (
+    <div className={classes.textFieldWrapper}>
+      <TextField
+        className={classes.textField}
+        label='Make'
+        color='secondary'
+        value={uploadForm.make}
+        type='text'
+        onChange={(e) => handleChange(e, 'make')}
+      />
+      <TextField
+        className={classes.textField}
+        label='Model'
+        color='secondary'
+        value={uploadForm.model}
+        type='text'
+        onChange={(e) => handleChange(e, 'model')}
+      />
+      <TextField
+        className={classes.textField}
+        label='Year'
+        color='secondary'
+        value={uploadForm.year}
+        type='number'
+        onChange={(e) => handleChange(e, 'year')}
+      />
+      <TextField
+        className={classes.textField}
+        label='Price'
+        color='secondary'
+        value={uploadForm.price}
+        type='number'
+        onChange={(e) => handleChange(e, 'price')}
+      />
+      <TextField
+        className={classes.textField}
+        label='Miles'
+        color='secondary'
+        value={uploadForm.miles}
+        type='number'
+        onChange={(e) => handleChange(e, 'miles')}
+      />
+      <TextField
+        className={classes.textField + ' ' + classes.descriptionField}
+        color='secondary'
+        label='Description'
+        value={uploadForm.description}
+        type='text'
+        multiline
+        onChange={(e) => handleChange(e, 'description')}
+      />
+    </div>
+  );
+}
+
+export default Add;

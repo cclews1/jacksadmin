@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useContext } from 'react';
 import { PhotoCamera, Close } from '@material-ui/icons';
 import {
   Button,
@@ -8,12 +8,16 @@ import {
   makeStyles,
   Typography,
 } from '@material-ui/core';
+import { imageGet } from '../../firebaseUtilities';
+import { AdminContext } from './AdminContext';
+import { Skeleton } from '@material-ui/lab';
 
 const useStyles = makeStyles((theme) => ({
   header: {
     fontFamily: theme.typography.jackFont,
   },
   fileUploadContainer: {
+    marginTop: '2rem',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -29,25 +33,8 @@ const useStyles = makeStyles((theme) => ({
     padding: ' 1rem',
     border: '2px dotted lightgrey',
   },
-  uploadedFilesContainer: {
-    display: 'flex',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    padding: '1rem 0',
-  },
-  cardMedia: {
-    height: 180,
-    width: '100%',
-  },
-  card: {
-    width: 270,
-  },
-  cardContainer: {
-    position: 'relative',
-    margin: '0.75rem',
+  imageUploadHeader: {
+    fontFamily: theme.typography.jackFont,
   },
   input: {
     backgroundColor: 'lightgrey',
@@ -67,6 +54,32 @@ const useStyles = makeStyles((theme) => ({
       outline: 'none',
     },
   },
+  uploadedFilesContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    padding: '1rem 0',
+  },
+  cardMedia: {
+    height: 180,
+    width: '100%',
+  },
+  progressContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  card: {
+    width: 270,
+  },
+  cardContainer: {
+    position: 'relative',
+    margin: '0.75rem',
+  },
   imageDelete: {
     backgroundColor: 'lightgrey',
     position: 'absolute',
@@ -75,34 +88,43 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function FileUpload({
+export default function FileUpload({
   label,
-  images,
+  prevImages,
+  updatePrevFilesCb,
+  imagesLabel,
+  prevImagesLabel,
   updateFilesCb,
-  maxFileSizeInBytes = 500000,
+  maxFileSizeInBytes = 5000000,
   ...otherProps
 }) {
   const fileInputField = useRef(null);
   const [files, setFiles] = useState({});
-
+  const context = useContext(AdminContext);
+  const [inventory, setInventory] = context.inventory;
   const classes = useStyles();
 
-  function handleUploadClick() {
-    fileInputField.current.click();
-  }
+  useEffect(() => {
+    setFiles({});
+  }, [inventory]);
 
-  function handleFileUpload(e) {
+  const handleUploadClick = () => {
+    fileInputField.current.click();
+  };
+
+  const handleFileUpload = (e) => {
     const { files: newFiles } = e.target;
     if (newFiles.length) {
       let updatedFiles = addNewFiles(newFiles);
       setFiles(updatedFiles);
       callUpdateFilesCb(updatedFiles);
+      console.log(files);
     }
-  }
+  };
 
-  function addNewFiles(newFiles) {
+  const addNewFiles = (newFiles) => {
     for (let file of newFiles) {
-      if (file.size <= maxFileSizeInBytes) {
+      if (file.size < maxFileSizeInBytes) {
         if (!otherProps.multiple) {
           return { file };
         }
@@ -110,26 +132,34 @@ function FileUpload({
       }
     }
     return { ...files };
-  }
+  };
 
-  function convertNestedObjectToArray(nestedObj) {
-    return Object.keys(nestedObj).map((key) => nestedObj[key]);
-  }
+  const convertNestedObjectToArray = (nestedObj) => {
+    // Object.keys(nestedObj).map((key) => nestedObj[key]);
+    return Object.values(nestedObj);
+  };
 
-  function callUpdateFilesCb(files) {
+  const callUpdateFilesCb = (files) => {
     const filesAsArray = convertNestedObjectToArray(files);
     updateFilesCb(filesAsArray);
-  }
+  };
 
-  function removeFile(fileName) {
+  const removeFile = (fileName) => {
     delete files[fileName];
     setFiles({ ...files });
     callUpdateFilesCb({ ...files });
+  };
+
+  function removePrevImage(imageName) {
+    const filteredImages = prevImages.filter((image) => image !== imageName);
+    updatePrevFilesCb(filteredImages);
   }
 
   return (
     <div className={classes.fileUploadContainer}>
-      <Typography className={classes.header}>{label}</Typography>
+      <Typography variant='h5' className={classes.header}>
+        {label}
+      </Typography>
       <section className={classes.uploadSection}>
         <Typography>Drag and drop or</Typography>
         <Button
@@ -151,34 +181,86 @@ function FileUpload({
         />
       </section>
 
-      <Typography className={classes.imageUploadHeader}>
-        Images To Upload: {images && images[0] ? images.length : 0}
-      </Typography>
-      <section className={classes.uploadedFilesContainer}>
-        {Object.keys(files).map((fileName, i) => {
-          let file = files[fileName];
-          return (
-            <div key={i} className={classes.cardContainer}>
-              <Card className={classes.card}>
-                <CardMedia
-                  className={classes.cardMedia}
-                  image={URL.createObjectURL(file)}
-                  alt={`file preview ${i}`}
+      {files && Object.keys(files)[0] ? (
+        <>
+          <Typography className={classes.imageUploadHeader}>
+            {imagesLabel}:{' '}
+            {files && Object.keys(files)[0] ? Object.keys(files).length : 0}
+          </Typography>
+          <section className={classes.uploadedFilesContainer}>
+            {Object.keys(files).map((fileName) => {
+              const file = files[fileName];
+              return (
+                <ImageRender
+                  key={fileName}
+                  removeFile={removeFile}
+                  fileName={fileName}
+                  fileData={file}
                 />
-              </Card>
-              <IconButton
-                size='small'
-                className={classes.imageDelete}
-                onClick={() => removeFile(fileName)}
-              >
-                <Close />
-              </IconButton>
-            </div>
-          );
-        })}
-      </section>
+              );
+            })}
+          </section>
+        </>
+      ) : null}
+      {prevImages ? (
+        <>
+          <Typography className={classes.imageUploadHeader}>
+            {prevImagesLabel}: {prevImages.length}
+          </Typography>
+          <section className={classes.uploadedFilesContainer}>
+            {prevImages.map((image) => {
+              return (
+                <ImageRender
+                  isPrevImage
+                  key={image}
+                  removeFile={removePrevImage}
+                  fileName={image}
+                />
+              );
+            })}
+          </section>
+        </>
+      ) : null}
     </div>
   );
 }
 
-export default FileUpload;
+function ImageRender({ removeFile, fileData, fileName, isPrevImage }) {
+  const classes = useStyles();
+
+  const [file, setFile] = useState();
+
+  useEffect(() => {
+    if (isPrevImage) {
+      // console.log(file);
+      imageGet(fileName).then((imgUrl) => {
+        setFile(imgUrl);
+      });
+    } else {
+      setFile(URL.createObjectURL(fileData));
+    }
+  }, [fileName]);
+
+  return (
+    <div className={classes.cardContainer}>
+      <Card className={classes.card}>
+        {file === undefined ? (
+          <Skeleton variant='rect' className={classes.cardMedia} />
+        ) : (
+          <CardMedia
+            className={classes.cardMedia}
+            image={file}
+            alt={`file preview ${fileName}`}
+          />
+        )}
+      </Card>
+      <IconButton
+        size='small'
+        className={classes.imageDelete}
+        onClick={() => removeFile(fileName)}
+      >
+        <Close />
+      </IconButton>
+    </div>
+  );
+}

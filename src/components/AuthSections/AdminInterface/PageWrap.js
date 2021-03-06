@@ -9,7 +9,6 @@ const useStyles = makeStyles((theme) => ({
     alignItems: 'center',
     maxWidth: theme.breakpoints.values.md,
     width: '100%',
-    // backgroundColor: theme.palette.lightGrey.main,
   },
 }));
 

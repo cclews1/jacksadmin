@@ -1,13 +1,13 @@
-import { useState, useEffect, useContext } from 'react';
-import { makeStyles } from '@material-ui/core';
-// import Inventory from './AdminPages/Inventory';
+import { useState, useEffect } from 'react';
+import { makeStyles, Snackbar } from '@material-ui/core';
+import { Alert } from '@material-ui/lab';
+import Inventory from './AdminPages/Inventory';
 import NavTemplate from '../../NavTemplate';
 import PageWrap from './PageWrap';
-import axios from 'axios';
-// import { AdminUrlContext } from '../../../AuthContext';
 import { AdminContext } from './AdminContext';
-// import Edit from './AdminPages/Edit';
+import Edit from './AdminPages/Edit';
 import Add from './AdminPages/Add';
+import { pullInventory } from '../../firebaseUtilities';
 
 const useStyles = makeStyles((theme) => ({
   container: {
@@ -19,62 +19,72 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function AdminInterface({ logout, loggedIn }) {
+export default function AdminInterface({ logout }) {
   const classes = useStyles();
   const [location, setLocation] = useState('inventory');
   const [inventory, setInventory] = useState();
   const [editVehicle, setEditVehicle] = useState();
+  const [message, setMessage] = useState({
+    open: false,
+    message: '',
+    severity: '',
+  });
 
   const store = {
     inventory: [inventory, setInventory],
     location: [location, setLocation],
     editVehicle: [editVehicle, setEditVehicle],
+    pullInventory: pullInventory,
+    message: [message, setMessage],
   };
 
-  // const adminUrl = useContext(AdminUrlContext);
-
-  // useEffect(() => {
-  //   async function fetchInventory() {
-  //     const inventory = await axios
-  //       .get(`${adminUrl}/cars`, {
-  //         headers: {
-  //           Authorization: `Bearer ${localStorage.jwt}`,
-  //         },
-  //       })
-  //       .then((res) => {
-  //         setInventory(res.data);
-  //       })
-  //       .catch((err) => {
-  //         console.log(err.message);
-  //       });
-  //   }
-  //   fetchInventory();
-  // }, [adminUrl]);
+  useEffect(() => {
+    pullInventory(store);
+  }, []);
 
   return (
-    <AdminContext.Provider value={store}>
-      <div className={classes.container}>
-        <NavTemplate
-          location={location}
-          setLocation={setLocation}
-          logout={logout}
-          loggedIn={loggedIn}
-        >
-          <PageWrap>
-            {location === 'inventory' && <InventoryPlaceHolder />}
-            {location === 'addVehicle' && <Add />}
-            {location === 'editVehicle' && <EditPlaceHolder />}
-          </PageWrap>
-        </NavTemplate>
-      </div>
-    </AdminContext.Provider>
+    <>
+      <AdminContext.Provider value={store}>
+        <div className={classes.container}>
+          <NavTemplate
+            location={location}
+            setLocation={setLocation}
+            logout={logout}
+            loggedIn={true}
+          >
+            <PageWrap>
+              {location === 'inventory' && <Inventory />}
+              {location === 'addVehicle' && <Add />}
+              {location === 'editVehicle' && <Edit />}
+            </PageWrap>
+          </NavTemplate>
+        </div>
+        <DisplayMessage message={message} setMessage={setMessage} />
+      </AdminContext.Provider>
+    </>
   );
 }
-
-function EditPlaceHolder() {
-  return <h1>edit</h1>;
-}
-
-function InventoryPlaceHolder() {
-  return <h1>inventory</h1>;
+function DisplayMessage({ message, setMessage }) {
+  if (typeof message.message !== 'string') {
+    if (typeof message.message.message === 'string') {
+      message.message = message.message.message;
+    } else {
+      message.message = 'An error has occurred.';
+    }
+  }
+  function handleClose(e) {
+    setMessage({ message: '', severity: '', open: false });
+  }
+  return (
+    <Snackbar
+      open={message.open}
+      autoHideDuration={8000}
+      onClose={handleClose}
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+    >
+      <Alert elevation={6} severity={message.severity} onClose={handleClose}>
+        {message.message}
+      </Alert>
+    </Snackbar>
+  );
 }

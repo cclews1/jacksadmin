@@ -1,4 +1,4 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import {
   Typography,
   makeStyles,
@@ -7,11 +7,16 @@ import {
   Select,
   MenuItem,
   TextField,
-  Card,
-  CardMedia,
+  Button,
 } from '@material-ui/core';
+import { Publish, DeleteForever } from '@material-ui/icons';
 import { AdminContext } from '../../AdminContext';
-import { AdminUrlContext } from '../../../../AdminUrlContext';
+import FileUpload from '../../FileUpload';
+import {
+  update,
+  pullInventory,
+  removeVehicle,
+} from '../../../../firebaseUtilities';
 
 const useStyles = makeStyles((theme) => ({
   heading: {
@@ -28,9 +33,20 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
+    maxWidth: theme.breakpoints.values.sm,
+  },
+  form: {
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    maxWidth: theme.breakpoints.values.sm,
   },
   textField: {
-    margin: '0.7rem 0',
+    margin: '0.5rem',
+  },
+  descriptionField: {
+    width: '14rem',
   },
   imageCard: {
     width: '100%',
@@ -40,20 +56,60 @@ const useStyles = makeStyles((theme) => ({
     width: 300,
     maxWidth: '100%',
   },
+  buttonsWrapper: {
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  deleteButton: {
+    width: '100%',
+    marginTop: '1rem',
+  },
 }));
 
-export default function Edit() {
+function Edit() {
   const classes = useStyles();
-  const adminUrl = useContext(AdminUrlContext);
-  const [editVehicle, setEditVehicle] = useContext(AdminContext).editVehicle;
-  const [inventory, setInventory] = useContext(AdminContext).inventory;
-  const [editor, setEditor] = useState(editVehicle);
-  function handleChange(e, field) {
-    setEditor({ ...editor, [field]: e.target.value });
+  const context = useContext(AdminContext);
+  const [location, setLocation] = context.location;
+  const [editVehicle, setEditVehicle] = context.editVehicle;
+  const [inventory, setInventory] = context.inventory;
+  const [message, setMessage] = context.message;
+  const [editValues, setEditValues] = useState(editVehicle);
+  const [newImages, setNewImages] = useState([]);
+  const [prevImages, setPrevImages] = useState([]);
+
+  useEffect(() => {
+    if (inventory) {
+      setEditValues(editVehicle);
+      setPrevImages(editVehicle.images);
+      setNewImages([]);
+    }
+  }, [editVehicle, inventory]);
+
+  async function changeVehicle(e) {
+    await setEditVehicle(e.target.value);
   }
-  function changeVehicle(e) {
-    setEditVehicle(e.target.value);
-    setEditor(e.target.value);
+
+  function handleChange(e, field) {
+    setEditValues({ ...editValues, [field]: e.target.value });
+  }
+
+  async function handleSubmit() {
+    const userMessage = await update(
+      newImages,
+      editValues,
+      prevImages,
+      editVehicle
+    );
+    setEditVehicle(inventory[0]);
+    setMessage({ ...userMessage, open: true });
+    await pullInventory(context);
+  }
+
+  async function handleDelete() {
+    const userMessage = await removeVehicle(editVehicle);
+    setMessage({ ...userMessage, open: true });
+    await pullInventory(context);
+    setLocation('inventory');
   }
 
   return (
@@ -68,75 +124,96 @@ export default function Edit() {
             <Select value={editVehicle} onChange={changeVehicle}>
               {inventory.map((car) => {
                 return (
-                  <MenuItem value={car}>
+                  <MenuItem value={car} key={car.id}>
                     {car.year} {car.make} {car.model}
                   </MenuItem>
                 );
               })}
             </Select>
           </FormControl>
-          <TextField
-            className={classes.textField}
-            value={editor.make}
-            label='Make'
-            color='secondary'
-            onChange={(e) => handleChange(e, 'make')}
+          <div className={classes.form}>
+            <TextField
+              className={classes.textField}
+              value={editValues.make}
+              label='Make'
+              color='secondary'
+              onChange={(e) => handleChange(e, 'make')}
+            />
+            <TextField
+              className={classes.textField}
+              value={editValues.model}
+              color='secondary'
+              label='Model'
+              onChange={(e) => handleChange(e, 'model')}
+            />
+            <TextField
+              className={classes.textField}
+              value={editValues.year}
+              color='secondary'
+              label='Year'
+              type='number'
+              onChange={(e) => handleChange(e, 'year')}
+            />
+            <TextField
+              className={classes.textField}
+              value={editValues.price}
+              color='secondary'
+              label='Price'
+              type='number'
+              onChange={(e) => handleChange(e, 'price')}
+            />
+            <TextField
+              className={classes.textField}
+              value={editValues.miles}
+              color='secondary'
+              label='Mileage'
+              type='number'
+              onChange={(e) => handleChange(e, 'miles')}
+            />
+            <TextField
+              className={classes.textField + ' ' + classes.descriptionField}
+              value={editValues.description}
+              color='secondary'
+              label='Description'
+              multiline
+              type='text'
+              onChange={(e) => handleChange(e, 'description')}
+            />
+          </div>
+          <FileUpload
+            prevImages={prevImages}
+            updatePrevFilesCb={setPrevImages}
+            label='Add or Remove Images'
+            imagesLabel='New Images'
+            prevImagesLabel='Current Images'
+            multiple
+            accept='.jpg,.png,.jpeg'
+            updateFilesCb={setNewImages}
           />
-          <TextField
-            className={classes.textField}
-            value={editor.model}
-            color='secondary'
-            label='Model'
-            onChange={(e) => handleChange(e, 'model')}
-          />
-          <TextField
-            className={classes.textField}
-            value={editor.year}
-            color='secondary'
-            label='Year'
-            type='number'
-            onChange={(e) => handleChange(e, 'year')}
-          />
-          <TextField
-            className={classes.textField}
-            value={editor.miles}
-            color='secondary'
-            label='Mileage'
-            type='number'
-            onChange={(e) => handleChange(e, 'miles')}
-          />
-          <Typography
-            className={classes.heading + ' ' + classes.pictureHeading}
-          >
-            Pictures
-          </Typography>
-          {editor.pictures[0] ? (
-            editor.pictures.map((picture) => {
-              let imgUrl;
-              if (picture.formats.large) {
-                imgUrl = picture.formats.large.url;
-              } else if (picture.formats.medium) {
-                imgUrl = picture.formats.medium.url;
-              } else if (picture.formats.small) {
-                imgUrl = picture.formats.small.url;
-              } else imgUrl = picture.url;
-
-              return (
-                <Card className={classes.imageCard}>
-                  <CardMedia
-                    className={classes.cardMedia}
-                    image={adminUrl + imgUrl}
-                  />
-                </Card>
-              );
-            })
-          ) : (
-            <p>Loading Images . . .</p>
-          )}
+          <div className={classes.buttonsWrapper}>
+            <Button
+              variant='contained'
+              color='primary'
+              startIcon={<Publish />}
+              onClick={handleSubmit}
+            >
+              Submit Changes
+            </Button>
+            <Button
+              variant='contained'
+              className={classes.deleteButton}
+              startIcon={<DeleteForever />}
+              onClick={handleDelete}
+            >
+              Delete Vehicle
+            </Button>
+          </div>
         </div>
       ) : (
-        <p>loading editor...</p>
+        <p>No vehicles to edit.</p>
       )}
     </>
   );
 }
+
+export default Edit;
