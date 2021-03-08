@@ -44,6 +44,7 @@ function Add() {
   const [message, setMessage] = context.message;
   const classes = useStyles();
   const [location, setLocation] = context.location;
+  const [loading, setLoading] = context.loading;
   const [uploadForm, setUploadForm] = useState({});
   const [images, setImages] = useState();
 
@@ -59,7 +60,9 @@ function Add() {
         open: true,
       });
     }
+    setLoading(true);
     const newMessage = await handleSubmit(e, uploadForm, images, context);
+    setLoading(false);
     await pullInventory(context);
     await setLocation('inventory');
     setMessage({ ...newMessage, open: true });

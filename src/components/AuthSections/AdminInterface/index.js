@@ -1,5 +1,10 @@
 import { useState, useEffect } from 'react';
-import { makeStyles, Snackbar } from '@material-ui/core';
+import {
+  makeStyles,
+  Snackbar,
+  Backdrop,
+  CircularProgress,
+} from '@material-ui/core';
 import { Alert } from '@material-ui/lab';
 import Inventory from './AdminPages/Inventory';
 import NavTemplate from '../../NavTemplate';
@@ -17,6 +22,10 @@ const useStyles = makeStyles((theme) => ({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  backdrop: {
+    zIndex: theme.zIndex.drawer + 1,
+    color: '#fff',
+  },
 }));
 
 export default function AdminInterface({ logout }) {
@@ -24,6 +33,7 @@ export default function AdminInterface({ logout }) {
   const [location, setLocation] = useState('inventory');
   const [inventory, setInventory] = useState();
   const [editVehicle, setEditVehicle] = useState();
+  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({
     open: false,
     message: '',
@@ -36,6 +46,7 @@ export default function AdminInterface({ logout }) {
     editVehicle: [editVehicle, setEditVehicle],
     pullInventory: pullInventory,
     message: [message, setMessage],
+    loading: [loading, setLoading],
   };
 
   useEffect(() => {
@@ -46,6 +57,9 @@ export default function AdminInterface({ logout }) {
     <>
       <AdminContext.Provider value={store}>
         <div className={classes.container}>
+          <Backdrop open={loading} className={classes.backdrop}>
+            <CircularProgress color='primary' />
+          </Backdrop>
           <NavTemplate
             location={location}
             setLocation={setLocation}
@@ -80,6 +94,9 @@ function DisplayMessage({ message, setMessage }) {
       open={message.open}
       autoHideDuration={8000}
       onClose={handleClose}
+      style={{
+        marginBottom: '2rem',
+      }}
       anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
     >
       <Alert elevation={6} severity={message.severity} onClose={handleClose}>

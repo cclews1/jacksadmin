@@ -1,5 +1,6 @@
 import firebase from '../firebase';
 import uuid from 'uuid/dist/v4';
+import { FilterCenterFocus } from '@material-ui/icons';
 
 const fileExt = '_1500x1000';
 
@@ -214,7 +215,7 @@ async function uploadFile(carId, image) {
   const imgId = uuid();
   try {
     const fileRef = storage.ref().child(imgId);
-    await fileRef
+    fileRef
       .put(image, (err) => {
         if (err) throw err;
       })
