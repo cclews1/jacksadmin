@@ -73,6 +73,7 @@ function Edit() {
   const [editVehicle, setEditVehicle] = context.editVehicle;
   const [inventory, setInventory] = context.inventory;
   const [message, setMessage] = context.message;
+  const [loading, setLoading] = context.loading;
   const [editValues, setEditValues] = useState(editVehicle);
   const [newImages, setNewImages] = useState([]);
   const [prevImages, setPrevImages] = useState([]);
@@ -94,12 +95,14 @@ function Edit() {
   }
 
   async function handleSubmit() {
+    setLoading(true)
     const userMessage = await update(
       newImages,
       editValues,
       prevImages,
       editVehicle
     );
+    setLoading(false)
     setEditVehicle(inventory[0]);
     setMessage({ ...userMessage, open: true });
     await pullInventory(context);
